@@ -1,36 +1,63 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Project, Chapter, ReferenceDocument, CorrectionResult, ResearchDossier } from '../types';
 
-const SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL || '';
-const SUPABASE_ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+const DEFAULT_SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL || '';
+const DEFAULT_SUPABASE_ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
 
 export let supabase: SupabaseClient | null = null;
 
-if (SUPABASE_URL && SUPABASE_ANON_KEY) {
+if (DEFAULT_SUPABASE_URL && DEFAULT_SUPABASE_ANON_KEY) {
   try {
-    supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_ANON_KEY);
   } catch (err) {
-    console.warn('Supabase initialization warning:', err);
+    console.warn('Supabase default init warning:', err);
   }
 }
 
 /**
- * Initialize custom Supabase client dynamically if user configures credentials
+ * Initialize / update client dynamically from project settings
  */
-export function initSupabaseClient(url: string, key: string): SupabaseClient {
-  supabase = createClient(url, key);
-  return supabase;
+export function getOrCreateSupabaseClient(url?: string, key?: string): SupabaseClient | null {
+  const targetUrl = url || DEFAULT_SUPABASE_URL;
+  const targetKey = key || DEFAULT_SUPABASE_ANON_KEY;
+
+  if (!targetUrl || !targetKey) return null;
+
+  try {
+    supabase = createClient(targetUrl, targetKey);
+    return supabase;
+  } catch (err) {
+    console.error('Failed to create Supabase client:', err);
+    return null;
+  }
+}
+
+/**
+ * Test Supabase CC_ table connection
+ */
+export async function testSupabaseConnection(url: string, key: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const client = createClient(url, key);
+    const { error } = await client.from('CC_projects').select('id').limit(1);
+    if (error) {
+      return { success: false, message: error.message };
+    }
+    return { success: true, message: 'Connected successfully to CC_ tables!' };
+  } catch (err: any) {
+    return { success: false, message: err.message || 'Connection failed' };
+  }
 }
 
 /**
  * Save / Sync Project to CC_projects
  */
 export async function syncProjectToSupabase(project: Project): Promise<boolean> {
-  if (!supabase) return false;
+  const client = getOrCreateSupabaseClient(project.settings.supabaseUrl, project.settings.supabaseAnonKey);
+  if (!client) return false;
 
   try {
-    // 1. Sync project
-    const { error: projError } = await supabase
+    // 1. Sync project to CC_projects
+    const { error: projError } = await client
       .from('CC_projects')
       .upsert({
         id: project.id,
@@ -57,7 +84,7 @@ export async function syncProjectToSupabase(project: Project): Promise<boolean> 
         updated_at: new Date().toISOString(),
       }));
 
-      const { error: chError } = await supabase
+      const { error: chError } = await client
         .from('CC_chapters')
         .upsert(chapterRows);
 
@@ -81,7 +108,7 @@ export async function syncProjectToSupabase(project: Project): Promise<boolean> 
         year: ref.year,
       }));
 
-      const { error: refError } = await supabase
+      const { error: refError } = await client
         .from('CC_references')
         .upsert(refRows);
 
@@ -90,7 +117,7 @@ export async function syncProjectToSupabase(project: Project): Promise<boolean> 
 
     // 4. Sync research dossier to CC_research_dossiers
     if (project.researchDossier) {
-      const { error: dosError } = await supabase
+      const { error: dosError } = await client
         .from('CC_research_dossiers')
         .upsert({
           id: project.researchDossier.id,
@@ -117,11 +144,12 @@ export async function syncProjectToSupabase(project: Project): Promise<boolean> 
 /**
  * Fetch Project from CC_projects, CC_chapters, CC_references
  */
-export async function loadProjectFromSupabase(projectId: string): Promise<Project | null> {
-  if (!supabase) return null;
+export async function loadProjectFromSupabase(projectId: string, url?: string, key?: string): Promise<Project | null> {
+  const client = getOrCreateSupabaseClient(url, key);
+  if (!client) return null;
 
   try {
-    const { data: projData, error: projErr } = await supabase
+    const { data: projData, error: projErr } = await client
       .from('CC_projects')
       .select('*')
       .eq('id', projectId)
@@ -129,18 +157,18 @@ export async function loadProjectFromSupabase(projectId: string): Promise<Projec
 
     if (projErr || !projData) return null;
 
-    const { data: chData } = await supabase
+    const { data: chData } = await client
       .from('CC_chapters')
       .select('*')
       .eq('project_id', projectId)
       .order('order_num', { ascending: true });
 
-    const { data: refData } = await supabase
+    const { data: refData } = await client
       .from('CC_references')
       .select('*')
       .eq('project_id', projectId);
 
-    const { data: dosData } = await supabase
+    const { data: dosData } = await client
       .from('CC_research_dossiers')
       .select('*')
       .eq('project_id', projectId)

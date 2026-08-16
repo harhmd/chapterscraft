@@ -174,6 +174,8 @@ export interface ProjectSettings {
   autoSaveInterval: number;
   defaultWordCountGoal: number;
   preferredCitationStyle: 'APA7' | 'Harvard' | 'IEEE' | 'Chicago';
+  supabaseUrl?: string;
+  supabaseAnonKey?: string;
 }
 
 export interface Project {
