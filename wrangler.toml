@@ -1,9 +1,10 @@
 name = "chapterscraft"
 main = "worker.js"
 compatibility_date = "2026-08-16"
+pages_build_output_dir = "build_cf"
 
 [assets]
-directory = "./dist"
+directory = "./build_cf"
 not_found_handling = "single-page-application"
 
 [vars]
