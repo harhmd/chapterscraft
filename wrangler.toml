@@ -2,6 +2,11 @@ name = "chapterscraft"
 compatibility_date = "2026-08-16"
 pages_build_output_dir = "dist"
 
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
 [vars]
 VITE_SUPABASE_URL = "https://ekjspsgeqvewcncnwedf.supabase.co"
 VITE_SUPABASE_ANON_KEY = "sb_publishable_TzTg3YQr67qSMhgl5W7XKw_OcRuDOmp"
