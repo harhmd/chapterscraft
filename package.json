@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "deploy": "wrangler deploy"
+    "deploy": "wrangler pages deploy dist"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
