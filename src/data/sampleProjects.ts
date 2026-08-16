@@ -15,6 +15,8 @@ export const DEFAULT_BLANK_PROJECT: Project = {
     autoSaveInterval: 10,
     defaultWordCountGoal: 7500,
     preferredCitationStyle: 'APA7',
+    supabaseUrl: 'https://ekjspsgeqvewcncnwedf.supabase.co',
+    supabaseAnonKey: 'sb_publishable_TzTg3YQr67qSMhgl5W7XKw_OcRuDOmp',
   },
   chapters: [
     {

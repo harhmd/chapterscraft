@@ -1,17 +1,15 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import { Project, Chapter, ReferenceDocument, CorrectionResult, ResearchDossier } from '../types';
 
-const DEFAULT_SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL || '';
-const DEFAULT_SUPABASE_ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+const DEFAULT_SUPABASE_URL = (import.meta as any).env?.VITE_SUPABASE_URL || 'https://ekjspsgeqvewcncnwedf.supabase.co';
+const DEFAULT_SUPABASE_ANON_KEY = (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || 'sb_publishable_TzTg3YQr67qSMhgl5W7XKw_OcRuDOmp';
 
 export let supabase: SupabaseClient | null = null;
 
-if (DEFAULT_SUPABASE_URL && DEFAULT_SUPABASE_ANON_KEY) {
-  try {
-    supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_ANON_KEY);
-  } catch (err) {
-    console.warn('Supabase default init warning:', err);
-  }
+try {
+  supabase = createClient(DEFAULT_SUPABASE_URL, DEFAULT_SUPABASE_ANON_KEY);
+} catch (err) {
+  console.warn('Supabase default init warning:', err);
 }
 
 /**
